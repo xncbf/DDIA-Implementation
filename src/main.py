@@ -1,8 +1,11 @@
+from datetime import datetime
 from fastapi import FastAPI, Query, Depends, Path
 from sqlmodel import Session, select
 import uvicorn
+
 from src.db import get_db
 from src import models, schemas
+
 
 app = FastAPI()
 
@@ -46,9 +49,18 @@ def read_timeline(
     ]
 
 
-@app.post("/tweet")
-def tweet():
-    pass
+@app.post("/tweet/{user_id}", response_model=schemas.Tweet)
+def tweet(
+    tweet: schemas.TweetCreate,
+    user_id: str = Path(...),
+    db: Session = Depends(get_db),
+):
+    timestamp = int(datetime.now().timestamp())
+    db_tweet = models.Tweets(sender_id=user_id, text=tweet.text, timestamp=timestamp)
+    db.add(db_tweet)
+    db.commit()
+    db.refresh(db_tweet)
+    return db_tweet
 
 
 if __name__ == "__main__":

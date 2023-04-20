@@ -21,3 +21,10 @@ class User(BaseModel):
 class TimelineOut(BaseModel):
     tweet: Tweet
     user: User
+
+
+class TweetCreate(BaseModel):
+    text: str
+
+    class Config:
+        orm_mode = True
