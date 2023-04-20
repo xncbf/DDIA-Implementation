@@ -2,7 +2,8 @@ from sqlmodel import Field, SQLModel
 
 
 class Follows(SQLModel, table=True):
-    follower_id: int = Field(primary_key=True)
+    id: int = Field(primary_key=True)
+    follower_id: int = Field(foreign_key="users.id")
     followee_id: int = Field(foreign_key="users.id")
 
 
