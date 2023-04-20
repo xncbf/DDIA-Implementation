@@ -20,20 +20,24 @@ def create_db_and_tables():
 
 
 def create_datas():
+    print("creating users")
     users = []
-    for i in range(1, 100):
+    for i in range(1, 300000):
         users.append(
             models.Users(
                 screen_name=f"user{i}", profile_image=f"https://example.com/user{i}.png"
             )
         )
-
+    print(f"{len(users)} users created")
     follows = []
+    for i in range(1, 300000):
+        follows.append(models.Follows(follower_id=i, followee_id=1))
+    print("influencer created")
     for i in range(1, 100):
-        for j in range(1, 100):
+        for j in range(2, 100):
             if i != j:
                 follows.append(models.Follows(follower_id=i, followee_id=j))
-
+    print("follows created")
     tweets = []
     for i in range(1, 100):
         for j in range(1, 100):
@@ -45,13 +49,14 @@ def create_datas():
                         timestamp=random.randint(0, 1000000000),
                     )
                 )
+    print("tweets created")
     with Session(engine) as session:
-        for user in users:
-            session.add(user)
-        for follow in follows:
-            session.add(follow)
-        for tweet in tweets:
-            session.add(tweet)
+        # 100개씩 끊어서 저장
+        session.bulk_save_objects(users)
+        session.commit()
+        session.bulk_save_objects(follows)
+        session.commit()
+        session.bulk_save_objects(tweets)
         session.commit()
 
 
