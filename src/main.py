@@ -26,6 +26,7 @@ def read_timeline(
                 models.Tweets, models.Users, models.Tweets.sender_id == models.Users.id
             )
             .join(models.Follows, models.Follows.followee_id == models.Users.id)
+            .filter(models.Follows.follower_id == user_id)
         )
         .offset(offset)
         .limit(limit)
