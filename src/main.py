@@ -1,46 +1,13 @@
-from datetime import datetime
 from fastapi import FastAPI, Query, Depends, Path
-from sqlmodel import Session, select
+from sqlmodel import Session
 import uvicorn
 
+from src.services import get_timeline, post_tweet
 from src.db import get_db
 from src import models, schemas
 
 
 app = FastAPI()
-
-
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
-
-
-def get_timeline_by_query(db, offset, limit, user_id):
-    query = (
-        (
-            select(models.Tweets, models.Users)
-            .join_from(
-                models.Tweets, models.Users, models.Tweets.sender_id == models.Users.id
-            )
-            .join(models.Follows, models.Follows.followee_id == models.Users.id)
-            .filter(models.Follows.follower_id == user_id)
-        )
-        .offset(offset)
-        .limit(limit)
-    )
-    results = db.exec(query).all()
-    return results
-
-
-def get_timeline_by_cache(offset, limit, user_id):
-    pass
-
-
-def get_timeline(db, offset, limit, user_id):
-    results = get_timeline_by_cache(offset, limit, user_id)
-    if not results:
-        results = get_timeline_by_query(db, offset, limit, user_id)
-    return results
 
 
 @app.get("/timeline/{user_id}", response_model=list[schemas.TimelineOut])
@@ -70,11 +37,7 @@ def tweet(
     user_id: str = Path(...),
     db: Session = Depends(get_db),
 ):
-    timestamp = int(datetime.now().timestamp())
-    db_tweet = models.Tweets(sender_id=user_id, text=tweet.text, timestamp=timestamp)
-    db.add(db_tweet)
-    db.commit()
-    db.refresh(db_tweet)
+    db_tweet = post_tweet(db, tweet, user_id)
     return db_tweet
 
 

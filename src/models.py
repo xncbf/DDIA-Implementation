@@ -18,3 +18,10 @@ class Users(SQLModel, table=True):
     id: int = Field(primary_key=True)
     screen_name: str = Field(max_length=15)
     profile_image: str = Field(max_length=255)
+
+
+class TimelineCache(SQLModel, table=True):
+    id: int = Field(primary_key=True)
+    user_id: int = Field(index=True)
+    tweet_id: int = Field(index=True)
+    timestamp: int = Field()
