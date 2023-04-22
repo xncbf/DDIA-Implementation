@@ -52,14 +52,6 @@ def _set_timeline_cache(
         db.refresh(db_cache)
 
 
-def get_timeline(db: Session, offset, limit, user_id) -> list[schemas.TimelineOut]:
-    results = _get_timeline_by_cache(db, offset, limit, user_id)
-    if not results:
-        results = _get_timeline_by_query(db, offset, limit, user_id)
-        _set_timeline_cache(db, results, user_id)
-    return results
-
-
 def _set_tweet_to_user_timeline_cache(
     db: Session, tweet, user_id
 ) -> models.TimelineCache:
@@ -80,6 +72,14 @@ def _save_tweet(db: Session, tweet, user_id):
     db.commit()
     db.refresh(db_tweet)
     return db_tweet
+
+
+def get_timeline(db: Session, offset, limit, user_id) -> list[schemas.TimelineOut]:
+    results = _get_timeline_by_cache(db, offset, limit, user_id)
+    if not results:
+        results = _get_timeline_by_query(db, offset, limit, user_id)
+        _set_timeline_cache(db, results, user_id)
+    return results
 
 
 def post_tweet(db: Session, tweet, user_id):
