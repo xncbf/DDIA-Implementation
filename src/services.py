@@ -46,8 +46,11 @@ def _get_timeline_by_cache(
 def _set_timeline_cache(
     db: Session, results: list[models.Tweets, models.Users], user_id
 ) -> None:
+    timestamp = int(datetime.now().timestamp())
     for tweet, user in results:
-        db_cache = _set_tweet_to_user_timeline_cache(db, tweet, user_id)
+        db_cache = models.TimelineCache(
+            user_id=user_id, tweet_id=tweet.id, timestamp=timestamp
+        )
         db.commit()
         db.refresh(db_cache)
 
@@ -56,9 +59,13 @@ def _set_tweet_to_user_timeline_cache(
     db: Session, tweet, user_id
 ) -> models.TimelineCache:
     timestamp = int(datetime.now().timestamp())
-    db_cache = models.TimelineCache(
-        user_id=user_id, tweet_id=tweet.id, timestamp=timestamp
-    )
+    # 내 모든 팔로워들에게 캐시를 저장한다.
+    query = select(models.Follows).where(models.Follows.followee_id == user_id)
+    followers = db.exec(query).all()
+    for follower in followers:
+        db_cache = models.TimelineCache(
+            user_id=follower.follower_id, tweet_id=tweet.id, timestamp=timestamp
+        )
     db.add(db_cache)
     db.commit()
     db.refresh(db_cache)
