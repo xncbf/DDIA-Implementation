@@ -1,10 +1,12 @@
 from sqlmodel import select, Session
 from datetime import datetime
 
-from src import models
+from src import models, schemas
 
 
-def _get_timeline_by_query(db: Session, offset, limit, user_id):
+def _get_timeline_by_query(
+    db: Session, offset, limit, user_id
+) -> list[models.Tweets, models.Users]:
     query = (
         (
             select(models.Tweets, models.Users)
@@ -22,7 +24,9 @@ def _get_timeline_by_query(db: Session, offset, limit, user_id):
     return results
 
 
-def _get_timeline_by_cache(db: Session, offset, limit, user_id):
+def _get_timeline_by_cache(
+    db: Session, offset, limit, user_id
+) -> list[models.Tweets, models.Users]:
     query = (
         select(models.Tweets, models.Users)
         .join(models.TimelineCache, models.TimelineCache.tweet_id == models.Tweets.id)
@@ -39,16 +43,16 @@ def _get_timeline_by_cache(db: Session, offset, limit, user_id):
     return None
 
 
-def _set_timeline_cache(db: Session, results, user_id):
-    timestamp = int(datetime.now().timestamp())
+def _set_timeline_cache(
+    db: Session, results: list[models.Tweets, models.Users], user_id
+) -> None:
     for tweet, user in results:
         db_cache = _set_tweet_to_user_timeline_cache(db, tweet, user_id)
-        db_cache.timestamp = timestamp
         db.commit()
         db.refresh(db_cache)
 
 
-def get_timeline(db: Session, offset, limit, user_id):
+def get_timeline(db: Session, offset, limit, user_id) -> list[schemas.TimelineOut]:
     results = _get_timeline_by_cache(db, offset, limit, user_id)
     if not results:
         results = _get_timeline_by_query(db, offset, limit, user_id)
@@ -56,7 +60,9 @@ def get_timeline(db: Session, offset, limit, user_id):
     return results
 
 
-def _set_tweet_to_user_timeline_cache(db: Session, tweet, user_id):
+def _set_tweet_to_user_timeline_cache(
+    db: Session, tweet, user_id
+) -> models.TimelineCache:
     timestamp = int(datetime.now().timestamp())
     db_cache = models.TimelineCache(
         user_id=user_id, tweet_id=tweet.id, timestamp=timestamp
