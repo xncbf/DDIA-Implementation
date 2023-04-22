@@ -15,13 +15,7 @@ def read_root():
     return {"Hello": "World"}
 
 
-@app.get("/timeline/{user_id}", response_model=list[schemas.TimelineOut])
-def read_timeline(
-    user_id: str = Path(...),
-    offset: int = 0,
-    limit: int = Query(default=100, lte=100),
-    db: Session = Depends(get_db),
-) -> list[models.Tweets]:
+def get_timeline_by_query(db, offset, limit, user_id):
     query = (
         (
             select(models.Tweets, models.Users)
@@ -35,7 +29,28 @@ def read_timeline(
         .limit(limit)
     )
     results = db.exec(query).all()
+    return results
 
+
+def get_timeline_by_cache(offset, limit, user_id):
+    pass
+
+
+def get_timeline(db, offset, limit, user_id):
+    results = get_timeline_by_cache(offset, limit, user_id)
+    if not results:
+        results = get_timeline_by_query(db, offset, limit, user_id)
+    return results
+
+
+@app.get("/timeline/{user_id}", response_model=list[schemas.TimelineOut])
+def read_timeline(
+    user_id: str = Path(...),
+    offset: int = 0,
+    limit: int = Query(default=100, lte=100),
+    db: Session = Depends(get_db),
+) -> list[models.Tweets]:
+    results = get_timeline(db, offset, limit, user_id)
     return [
         schemas.TimelineOut(
             tweet=schemas.Tweet(
