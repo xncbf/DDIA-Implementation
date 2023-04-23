@@ -25,3 +25,9 @@ class TimelineCache(SQLModel, table=True):
     user_id: int = Field(index=True)
     tweet_id: int = Field(index=True)
     timestamp: int = Field()
+
+
+class InfluencerTweetQueue(SQLModel, table=True):
+    id: int = Field(primary_key=True)
+    tweet_id: int = Field(index=True)
+    timestamp: int = Field()
